@@ -1,6 +1,6 @@
 use anyhow::Result;
 use iroh_roq::{
-    rtp::{self, codecs::opus::OpusPacket, packetizer::Depacketizer},
+    rtp::{self, codecs::opus::OpusPacket},
     ReceiveFlow,
 };
 use tokio::sync::{broadcast, oneshot};
@@ -41,7 +41,7 @@ impl RtpMediaTrackReceiver {
         }
     }
 
-    async fn run_loop<T: Depacketizer>(
+    async fn run_loop<T: rtp::packetizer::Depacketizer>(
         &mut self,
         depacketizer: T,
         sample_rate: u32,

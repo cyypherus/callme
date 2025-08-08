@@ -37,8 +37,7 @@ async fn main() -> Result<()> {
     let rtc = RtcProtocol::new(endpoint.clone());
     let _router = Router::builder(endpoint)
         .accept(RtcProtocol::ALPN, rtc.clone())
-        .spawn()
-        .await?;
+        .spawn();
 
     while let Some(conn) = rtc.accept().await? {
         info!("accepted");

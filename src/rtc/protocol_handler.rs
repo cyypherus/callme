@@ -1,5 +1,7 @@
+use std::future::Future;
+
 use anyhow::Result;
-use iroh::{protocol::ProtocolHandler, Endpoint, NodeAddr};
+use iroh::{endpoint::Connection, protocol::{AcceptError, ProtocolHandler}, Endpoint, NodeAddr};
 use iroh_roq::ALPN;
 use n0_future::{boxed::BoxFuture, FutureExt};
 use tokio_util::sync::CancellationToken;
@@ -16,22 +18,22 @@ pub struct RtcProtocol {
 }
 
 impl ProtocolHandler for RtcProtocol {
-    fn accept(&self, connecting: iroh::endpoint::Connecting) -> BoxFuture<Result<()>> {
-        let sender = self.sender.clone();
-        async move {
-            debug!("ProtocolHandler::accept: connecting");
-            let conn = connecting.await?;
-            debug!("ProtocolHandler::accept: conn");
-            let conn = RtcConnection::new(conn);
-            sender.send(conn).await?;
-            Ok(())
-        }
-        .boxed()
+    fn accept(
+        &self,
+        connection: Connection,
+    ) -> impl Future<Output = Result<(), AcceptError>> + Send {
+            let sender = self.sender.clone();
+            async move {
+                debug!("ProtocolHandler::accept: connecting");
+                let conn = RtcConnection::new(connection);
+                sender.send(conn).await.map_err(AcceptError::from_err)?;
+                Ok(())
+            }
     }
 
-    fn shutdown(&self) -> BoxFuture<()> {
+    fn shutdown(&self) -> impl Future<Output = ()> + Send {
         self.shutdown_token.cancel();
-        async move {}.boxed()
+        async move {}
     }
 }
 
